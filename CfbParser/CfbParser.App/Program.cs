@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CfbParser;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -64,7 +65,10 @@ namespace CfbParser.App
                 }
             }
             //allGameCounter.OrderBy(s => s.Year).ToList().ForEach(s => Console.WriteLine(s.ToString()));
-            closeGameCounter.OrderBy(s => s.Year).ToList().ForEach(s=>Console.WriteLine(s.ToString()));
+            //closeGameCounter.OrderBy(s => s.Year).ToList().ForEach(s=>Console.WriteLine(s.ToString()));
+            var final = closeGameCounter.OrderBy(s => s.Year).ToList();
+            final.ForEach(s => Console.WriteLine(s.ToString()));
+            FormattedOutputter.OutputToFile(@"C:\Users\csmea\Documents\lines\result.txt", "\t", final);
         }
 
 
