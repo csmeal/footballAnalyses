@@ -18,7 +18,7 @@ namespace CfbParser.App
             var allGameCounter = new List<HomeVisitorCounting>();
             var closeGameCounter= new List<HomeVisitorCounting>();
             var allGames = new List<GameResult>();
-           
+            var rivals = Rivals.ParseCsv(File.ReadAllText(@"C:\Users\csmea\Documents\lines\rivalries.txt")).ToList();
             string rankingFile = Directory.GetFiles(args[0]).FirstOrDefault(s => s.ToLower().Contains("rank"));
             var years = Enumerable.Range(1978, 2013 - 1978 + 1).ToList();
             List<RankingList> rankings = GetRankings(years, GameResult.TeamReplace(File.ReadAllText(rankingFile)).Split(Environment.NewLine.ToCharArray()).ToList());
@@ -31,6 +31,7 @@ namespace CfbParser.App
               
                 var allGameResult = results
                             .Select(s => new GameResult(s.Split(','))).ToList();
+              
                 //var vegasSub3 = allGameResult.Where(s => s.Line != null && s.Line.Value  < 0 && s.Line.Value > -3.5);
                 //var vegasSub3 = allGameResult.Where(s =>
                 //                    ranking.Ranking.FirstOrDefault(r => r.Team == s.HomeTeam) != null &&
@@ -58,7 +59,24 @@ namespace CfbParser.App
                 VisitorCounter = closeGameCounter.Sum(s => s.VisitorCounter),
                 Year = 70741
             });
-
+            var allRivalResults = Rivals.GamesInvolvingRivals(allGames, rivals).ToList();
+            var allRivalsHomeResult = new HomeVisitorCounting() {
+                Year = 3,
+                HomeWinCounter = allRivalResults.Count(s=>s.HomeScore > s.VisitingScore),
+                VisitorCounter = allRivalResults.Count(s=>s.VisitingScore >s.HomeScore)
+            };
+            var allRivalsCloseHomeResult = new HomeVisitorCounting() {
+                Year = 3,
+                HomeWinCounter = allRivalResults.Where(s => s.Line.HasValue && Math.Abs( s.Line.Value) < 7 ) .Count(s => s.HomeScore > s.VisitingScore),
+                VisitorCounter = allRivalResults.Where(s => s.Line.HasValue && Math.Abs(s.Line.Value) < 7).Count(s => s.VisitingScore > s.HomeScore)
+            };
+            var rivalHasLines = allRivalResults.Where(s => s.Line.HasValue);
+            var bigLines = allGames.Where(s =>s.Line.HasValue && s.Line.Value < -13.5);
+            int bigRivalCounter = bigLines.Count();
+            double homeCoversLine = 100 * (double)rivalHasLines.Count(s => (s.HomeScore  - s.VisitingScore - s.Line.Value) > 0) / (double)rivalHasLines.Count();
+            double homeCoversBigLine = 100 * (double)bigLines.Count(s => (s.HomeScore - s.VisitingScore - s.Line.Value) > 0) / bigLines.Count();
+            var d = allRivalsHomeResult.ToString();
+            var e = allRivalsCloseHomeResult.ToString();
             foreach (var team in rankings.SelectMany(s => s.Ranking.Select(r => r.Team))){
                 if (allGames.Count(a => team == a.HomeTeam) == 0) {
                     throw new Exception(team + " was not found");
